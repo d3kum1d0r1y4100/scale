@@ -153,3 +153,54 @@ func readLines(path string) ([]string, error) {
 	}
 	return lines, scanner.Err()
 }
+
+func pushIt(command string, queue string, parametersString string, test bool, timeout int, verbose bool) {
+
+	var split []string
+	var filenames []string
+	var placeholders []string
+
+	// split the parameters input into a slice of placeholder:filename pairs
+	parameters := strings.Split(parametersString, ",")
+
+	// separate the placeholder from the filename and store them in two slices for processing
+	for _, p := range parameters {
+		split = strings.Split(p, ":")
+		placeholders = append(placeholders, split[0])
+		filenames = append(filenames, split[1])
+	}
+
+	// get a slice of lines for each filename
+	var fileSlices [][]string
+	for _, filename := range filenames {
+		newFileLines, err := readLines(filename)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fileSlices = append(fileSlices, newFileLines)
+	}
+
+	// for each file, figure out how many lines there are. Store lengths of each file in a slice called lengths, and do the same for originalLengths
+	var lengths []int
+	var originalLengths []int
+
+	for i := range fileSlices {
+		length := len(fileSlices[i])
+		lengths = append(lengths, length)
+		originalLengths = append(originalLengths, length)
+	}
+
+	var wg sync.WaitGroup
+
+	// create a rendom queue name for sending back data
+	queueID := uuid.New().String()
+
+	// get the results back and print them
+	go printResults(queueID, &wg, verbose)
+
+	// this is the recursive function that generates all of the command combinations
+	loopThrough(fileSlices, placeholders, command, lengths, originalLengths, test, &wg, queueID, timeout, queue)
+
+	// wait for all results to be returned and printed before exiting
+	wg.Wait()
+}
