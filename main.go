@@ -274,7 +274,7 @@ func main() {
 
 	// Connect to redis server
 	redisClient = redis.NewClient(&redis.Options{
-		Addr:      "45.77.169.0" + ":" + "6379",
+		Addr:      config.Redis.Host + ":" + config.Redis.Port,
 		Password:  config.Redis.Password,
 		DB:        0,                                     // redis databases are deprecated so we will just use the default
 //		TLSConfig: &tls.Config{InsecureSkipVerify: true}, // needed for the standard DO redis
